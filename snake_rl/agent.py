@@ -1,2 +1,2 @@
-#看局面选动作：eps-greedy/greedy
-#TODO:C7时编写
+"""看局面选动作:eps-greedy/greedy"""
+# TODO:C7时编写

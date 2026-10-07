@@ -12,3 +12,4 @@ class TrainConfig:
     lr: float = 1e-3                # 学习率：参数每次拧多大
     batch_size: int = 64            # 每次复习几条经历
     replay_capacity: int = 100_000  # 记忆库最多存多少条
+    
