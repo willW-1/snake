@@ -1,0 +1,19 @@
+# 虚拟环境：几百 MB，且别人能自己重建
+.venv/
+
+# Python 编译缓存
+__pycache__/
+*.pyc
+
+# matplotlib 缓存
+.mplconfig/
+matplotlib-*/
+
+# 训练日志
+runs/
+
+# 模型权重
+models/
+
+# pytest 的缓存目录：你一跑测试它就在根目录冒出来
+.pytest_cache/
