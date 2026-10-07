@@ -15,5 +15,5 @@ runs/
 # 模型权重
 models/
 
-# pytest 的缓存目录：你一跑测试它就在根目录冒出来
+# pytest 的缓存目录：你一跑测试它就在根目录冒出来了
 .pytest_cache/
