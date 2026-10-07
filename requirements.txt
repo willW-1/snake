@@ -1,0 +1,6 @@
+# 只列直接依赖；间接依赖交给 pip 自己解决
+torch==2.14.1
+numpy==2.5.3
+matplotlib==3.11.2
+pygame-ce==2.5.8
+pytest==9.1.1
