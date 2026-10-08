@@ -27,7 +27,7 @@ class SnakeEnv:
 
     def reset(self) -> StepResult:
         """开一局新的，返回初始局面。"""
-        # TODO: 蛇 3 格放中间、朝右；随机放食物（不能落在蛇身上）；步数归零
+        self._done = False
         self.snake = [(self.grid_size // 2, self.grid_size // 2 + 1),
                       (self.grid_size // 2, self.grid_size // 2),
                       (self.grid_size // 2, self.grid_size // 2 - 1)]
@@ -36,56 +36,63 @@ class SnakeEnv:
         empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake]      
         self.food = self._rng.choice(empty)
         self.steps = 0
+        self.scores = 0
+        #注意：吃的食物不直接等于分数，按照我的设想还要有奖励的苹果
+        # TODO: add bonus apples
         return StepResult(tuple(self.snake), self.food, self.direction, False, "reset")
 
     def step(self, action: int) -> StepResult:
         """让蛇按 action 走一步，返回新世界。"""
         #决定3：反向=忽略
+        if self._done:
+            raise ValueError("蛇已经死了，先 reset()")
         if action + self.direction == 5 or action + self.direction == 1 : action = self.direction
         self.direction = action
         new_head = (self.snake[0][0] + ACTIONS[action][0], self.snake[0][1] + ACTIONS[action][1])
+        #撞死的时候朝向就是准备朝向的地方
         tail = self.snake[-1]
         del self.snake[-1]
-        if new_head[0] in (-1, self.grid_size) or new_head[1] in (-1, self.grid_size): event = "hit_wall"
-        elif new_head in self.snake: event = "hit_self"
+        if new_head[0] in (-1, self.grid_size) or new_head[1] in (-1, self.grid_size): 
+            event = "hit_wall"
+            self.snake.append(tail)
+        elif new_head in self.snake: 
+            event = "hit_self"
+            self.snake.append(tail)
         elif new_head == self.food: 
             event = "ate"
             self.steps = 0
-            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake]      
-            self.food = self._rng.choice(empty)
+            self.scores += 1
             self.snake.append(tail)
+            self.snake = [new_head, ] + self.snake
+            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake]
+            if not empty: event = "win"#赢了之后food 无意义
+            else: self.food = self._rng.choice(empty)
         else:
             self.steps += 1
             event = "moved"
-        self.snake = [new_head, ] + self.snake
-        if self.steps >= 100: #连续没吃到苹果的最大步数,默认100
-            event = "timeout"
-        if event in ("hit_wall", "hit_self", "timeout"): 
+            self.snake = [new_head, ] + self.snake
+            if self.steps >= 100: #连续没吃到苹果的最大步数,默认100
+                event = "timeout"
+        if event in ("hit_wall", "hit_self", "timeout", "win"): 
+            self._done = True
             return StepResult(tuple(self.snake), self.food, self.direction, True, event)
         else: return StepResult(tuple(self.snake), self.food, self.direction, False, event)
-        # TODO: 1) action → (dr, dc)；反向怎么处理（决定③）
-        # TODO: 2) 算出新头坐标
-        # TODO: 3) 依次判定：撞墙 → 撞自己 → 吃食物 → 正常移动
-        # TODO: 4) 判超时
-        # TODO: 5) 组装 StepResult（返回拷贝，见下面的坑①）
-
 
 if __name__ == "__main__":
     # 调试用：打一局随机策略的文字棋盘，达到 M1
-    table = [['*'] * 12 for i in range(12)]
-    rng = random.Random(0)
-    snake1 = SnakeEnv()
-    SnakeEnv.reset(snake1)
-    state = SnakeEnv.step(snake1, rng.randint(0, 3))
+    rng = random.Random(1)
+    snake1 = SnakeEnv(seed = 1)
+    table = [['*'] * snake1.grid_size for _ in range(snake1.grid_size)]
+    state = snake1.step(rng.randint(0, 3))
     while(not state.done):
-        for i in range(12):
-            for j in range(12):
+        for i in range(snake1.grid_size):
+            for j in range(snake1.grid_size):
                 if (i, j) in state.snake: table[i][j] = "o"
                 elif (i, j) == state.food: table[i][j] = "@"
                 else: table[i][j] = "*"
-        for i in range(12):
+        for i in range(snake1.grid_size):
             print(" ".join(table[i]))
-        state = SnakeEnv.step(snake1, rng.randint(0, 3))
-        print(state.event)
+        state = snake1.step(rng.randint(0, 3))
+        print(len(snake1.snake), snake1.scores)
         print()
     print(state.event)
