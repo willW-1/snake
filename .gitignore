@@ -17,3 +17,8 @@ models/
 
 # pytest 的缓存目录：你一跑测试它就在根目录冒出来了
 .pytest_cache/
+
+# 这台机器上 pytest 建缓存失败的残留目录（详见 pytest.ini 里的说明）。
+# 它们权限被锁住、删不掉，忽略掉才能让 git status 不再刷警告。
+# 以后清理干净了可以删掉这一行。
+pytest-cache-files-*/
