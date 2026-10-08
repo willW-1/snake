@@ -13,10 +13,11 @@ class StepResult:
     """一步之后世界的全部原始信息。"""
     snake: tuple[tuple[int, int], ...]
     food: tuple[int, int]
+    bonus: tuple[int, tuple[int, int]] | tuple[int, tuple()]
     direction: int
     done: bool
     event: str
-    #event:  "reset" / "moved" / "ate" / "hit_wall" / "hit_self" / "timeout"
+    #event:  "reset" / "moved" / "ate" / "hit_wall" / "hit_self" / "timeout" / "win" / "ate_bonus"
 
 
 class SnakeEnv:
@@ -37,9 +38,9 @@ class SnakeEnv:
         self.food = self._rng.choice(empty)
         self.steps = 0
         self.scores = 0
-        #注意：吃的食物不直接等于分数，按照我的设想还要有奖励的苹果
-        # TODO: add bonus apples
-        return StepResult(tuple(self.snake), self.food, self.direction, False, "reset")
+        self.bonus = [0, ()]
+        self.haveeaten = False
+        return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, False, "reset")
 
     def step(self, action: int) -> StepResult:
         """让蛇按 action 走一步，返回新世界。"""
@@ -52,31 +53,56 @@ class SnakeEnv:
         #撞死的时候朝向就是准备朝向的地方
         tail = self.snake[-1]
         del self.snake[-1]
+        #bonus的判定与生成
+        if(self.bonus[0] == 0 and self.scores % 6 == 0 and self.haveeaten):
+            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake + [new_head ,self.food]]
+            if empty:
+                self.bonus[0] = 6
+                self.bonus[1] = self._rng.choice(empty)
+                self.haveeaten = False
+        #撞墙判定
         if new_head[0] in (-1, self.grid_size) or new_head[1] in (-1, self.grid_size): 
             event = "hit_wall"
             self.snake.append(tail)
+        #撞自己判定
         elif new_head in self.snake: 
             event = "hit_self"
             self.snake.append(tail)
+        #吃bonus
+        elif new_head == self.bonus[1]:
+            event = "ate_bonus"
+            self.haveeaten = True
+            self.steps = 0
+            self.scores += self.bonus[0]
+            self.snake.append(tail)
+            self.snake = [new_head, ] + self.snake
+            self.bonus = [0, ()]
+        #吃food
         elif new_head == self.food: 
             event = "ate"
             self.steps = 0
             self.scores += 1
             self.snake.append(tail)
             self.snake = [new_head, ] + self.snake
-            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake]
+            self.haveeaten = True
+            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if ((r, c) not in self.snake and (r, c) != self.bonus[1])]
             if not empty: event = "win"#赢了之后food 无意义
             else: self.food = self._rng.choice(empty)
+        #move
         else:
             self.steps += 1
             event = "moved"
             self.snake = [new_head, ] + self.snake
             if self.steps >= 100: #连续没吃到苹果的最大步数,默认100
                 event = "timeout"
+        #bonus-1
+        if self.bonus[0] > 0 and self.bonus[0] != 6: #这里的6是刚生成的，刚生成的不用减1否则永远吃不到6
+            self.bonus[0] -= 1
+            if self.bonus[0] == 0: self.bonus[1] = ()
+
         if event in ("hit_wall", "hit_self", "timeout", "win"): 
             self._done = True
-            return StepResult(tuple(self.snake), self.food, self.direction, True, event)
-        else: return StepResult(tuple(self.snake), self.food, self.direction, False, event)
+        return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, self._done, event)
 
 if __name__ == "__main__":
     # 调试用：打一局随机策略的文字棋盘，达到 M1
@@ -89,6 +115,7 @@ if __name__ == "__main__":
             for j in range(snake1.grid_size):
                 if (i, j) in state.snake: table[i][j] = "o"
                 elif (i, j) == state.food: table[i][j] = "@"
+                elif state.bonus[1] == (i, j): table[i][j] = str(state.bonus[0])
                 else: table[i][j] = "*"
         for i in range(snake1.grid_size):
             print(" ".join(table[i]))
