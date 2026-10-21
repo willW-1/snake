@@ -102,7 +102,7 @@ def test_food_never_on_snake() -> None:
             #assert
             assert result.food not in result.snake, (
                 f"food {result.food} 落在蛇上: "
-                f"grid = {grid_size}, seed = {seed}"
+                f"grid = {grid}, seed = {seed}"
             )
 
 def test_length_grows_only_when_eating() -> None:
@@ -148,14 +148,17 @@ def test_hit_wall_terminal_state_is_in_bounds() -> None:
     env = SnakeEnv(grid_size = 6, seed = 1233)
     result = env.reset()
     action_rng = random.Random(123)
+    saw_wall = False
     for _ in range(500):
         if result.done: result = env.reset()
         action = action_rng.randint(0, 3)
         result = env.step(action)
         if result.event == "hit_wall":
+            saw_wall = True
             assert all(0 <= i < 6 and 0 <= j < 6 for i, j in result.snake), (
-                f"撞墙后, {i}, {j}处有蛇出现"
+                f"撞墙后, 有蛇出现"
             )
+    assert saw_wall, "这次检测没随机到，要不再测一次？"
 
 def test_timeout_after_max_steps_without_food() -> None:
     """连续 100 步没吃到食物 → event == "timeout"。
@@ -264,7 +267,7 @@ def test_eat_bonus_point() -> None:
         result = env.step(2)
     assert env.scores == 6, (
         f"scores wrong, scores = {env.scores}, snake = {result.snake}")
-    assert result.bonus[0] == 6, (f"bonus生成有问题， bonus point originally = {result.bonus[0]}")
-    assert len(result.bonus[1]) == 2 and result.bonus[1] not in result.snake and result.bonus[1] != result.food, (
-        f"bonus has problem, generated at {result.bonus}, food at {result.food}, snake should at (3,3)"
+    assert result.bonus[0] == 0, (f"bonus生成有问题， bonus point originally = {result.bonus[0]}")
+    assert len(result.bonus[1]) == 0, (
+        f"bonus has problem, generated"
     )

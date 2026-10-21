@@ -53,26 +53,30 @@ class SnakeEnv:
         if action + self.direction == 5 or action + self.direction == 1 : action = self.direction
         self.direction = action
         new_head = (self.snake[0][0] + ACTIONS[action][0], self.snake[0][1] + ACTIONS[action][1])
+
         #撞死的时候朝向就是准备朝向的地方
         tail = self.snake[-1]
         del self.snake[-1]
+
         #撞墙判定
         if new_head[0] in (-1, self.grid_size) or new_head[1] in (-1, self.grid_size): 
             event = "hit_wall"
             self.snake.append(tail)
+
         #撞自己判定
         elif new_head in self.snake: 
             event = "hit_self"
             self.snake.append(tail)
-        #吃bonus
+        
+        #吃bonus，会变长一格，也会重置timeout判例，这是设计
         elif new_head == self.bonus[1]:
             event = "ate_bonus"
-            self.haveeaten = True
             self.steps = 0
             self.scores += self.bonus[0]
             self.snake.append(tail)
             self.snake = [new_head, ] + self.snake
             self.bonus = [0, ()]
+        
         #吃food
         elif new_head == self.food: 
             event = "ate"
@@ -82,8 +86,10 @@ class SnakeEnv:
             self.snake = [new_head, ] + self.snake
             self.haveeaten = True
             empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if ((r, c) not in self.snake and (r, c) != self.bonus[1])]
+            #设计，win excludes bonus grid
             if not empty: event = "win"#赢了之后food 无意义
             else: self.food = self._rng.choice(empty)
+
         #move
         else:
             self.steps += 1
@@ -91,10 +97,12 @@ class SnakeEnv:
             self.snake = [new_head, ] + self.snake
             if self.steps >= 100: #连续没吃到苹果的最大步数,默认100
                 event = "timeout"
+
         #bonus-1
         if self.bonus[0] > 0: 
             self.bonus[0] -= 1
             if self.bonus[0] == 0: self.bonus[1] = ()
+
         #bonus的判定与生成
         if(self.bonus[0] == 0 and self.scores % 6 == 0 and self.haveeaten):
             empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake + [new_head ,self.food]]
