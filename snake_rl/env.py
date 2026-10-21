@@ -7,6 +7,7 @@ import random
 #0=上(-1,0)  1=下(+1,0)  2=左(0,-1)  3=右(0,+1)
 ACTIONS: dict[int, tuple[int, int]] = {0: (-1, 0), 1: (1, 0), 2: (0, -1), 3: (0, 1)}
 
+#吃 bonus 后，新 obs 里的 bonus 已经是 (0, ()) 或者新生成的 6。 所以奖励函数要取"吃到的 bonus 值"，必须从前一帧 prev.bonus[0] 读，不能从 new.bonus 读。
 
 @dataclass(frozen=True)
 class StepResult:
@@ -71,6 +72,7 @@ class SnakeEnv:
         #吃bonus，会变长一格，也会重置timeout判例，这是设计
         elif new_head == self.bonus[1]:
             event = "ate_bonus"
+            self.haveeaten = False
             self.steps = 0
             self.scores += self.bonus[0]
             self.snake.append(tail)

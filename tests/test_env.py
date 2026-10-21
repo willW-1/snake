@@ -123,7 +123,7 @@ def test_length_grows_only_when_eating() -> None:
         result = env.step(action)
         len2 = len(result.snake)
         if result.event == "win": continue
-        elif result.event == "ate":
+        elif result.event in ("ate", "ate_bonus"):
             assert len1 == len2 - 1, f"eat出错了，原len = {len1}, 新len = {len2}"
         else:
             assert len1 == len2, f"其他情况出错了，原len = {len1}, 新len = {len2}, event = {result.event}"
