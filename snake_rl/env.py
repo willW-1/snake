@@ -27,7 +27,8 @@ class SnakeEnv:
         self.reset()
 
     def reset(self) -> StepResult:
-        """开一局新的，返回初始局面。"""
+        """开一局新的，返回初始局面。
+        """
         self._done = False
         self.snake = [(self.grid_size // 2, self.grid_size // 2 + 1),
                       (self.grid_size // 2, self.grid_size // 2),
@@ -43,7 +44,9 @@ class SnakeEnv:
         return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, False, "reset")
 
     def step(self, action: int) -> StepResult:
-        """让蛇按 action 走一步，返回新世界。"""
+        """让蛇按 action 走一步，返回新世界。
+            0=上(-1,0)  1=下(+1,0)  2=左(0,-1)  3=右(0,+1)
+        """
         #决定3：反向=忽略
         if self._done:
             raise ValueError("蛇已经死了，先 reset()")
@@ -53,13 +56,6 @@ class SnakeEnv:
         #撞死的时候朝向就是准备朝向的地方
         tail = self.snake[-1]
         del self.snake[-1]
-        #bonus的判定与生成
-        if(self.bonus[0] == 0 and self.scores % 6 == 0 and self.haveeaten):
-            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake + [new_head ,self.food]]
-            if empty:
-                self.bonus[0] = 6
-                self.bonus[1] = self._rng.choice(empty)
-                self.haveeaten = False
         #撞墙判定
         if new_head[0] in (-1, self.grid_size) or new_head[1] in (-1, self.grid_size): 
             event = "hit_wall"
@@ -96,13 +92,25 @@ class SnakeEnv:
             if self.steps >= 100: #连续没吃到苹果的最大步数,默认100
                 event = "timeout"
         #bonus-1
-        if self.bonus[0] > 0 and self.bonus[0] != 6: #这里的6是刚生成的，刚生成的不用减1否则永远吃不到6
+        if self.bonus[0] > 0: 
             self.bonus[0] -= 1
             if self.bonus[0] == 0: self.bonus[1] = ()
+        #bonus的判定与生成
+        if(self.bonus[0] == 0 and self.scores % 6 == 0 and self.haveeaten):
+            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake + [new_head ,self.food]]
+            if empty:
+                self.bonus[0] = 6
+                self.bonus[1] = self._rng.choice(empty)
+                self.haveeaten = False
 
         if event in ("hit_wall", "hit_self", "timeout", "win"): 
             self._done = True
         return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, self._done, event)
+    
+    def return_status(self) -> StepResult:
+        """ONLY FOR TEST !!!"""
+        return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, self._done, "test")
+
 
 if __name__ == "__main__":
     # 调试用：打一局随机策略的文字棋盘，达到 M1
