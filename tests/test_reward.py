@@ -18,7 +18,7 @@ def test_reward_compute() -> None:
         r = reward.compute(prev=prev, new=new)
         rewards.append(r)
         pos_total = sum(r for r in rewards if r > 0)
-        if new.event == "move":
+        if new.event == "moved":
             assert r == 0.0, "move wrong"
         elif new.event == "ate":
             assert r == 1.0, "ate wrong"
