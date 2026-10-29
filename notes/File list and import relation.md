@@ -22,7 +22,7 @@
 | env.py | game rule | no | no | numpy |
 | render.py | show the scene to screen | yes | no | pygame, env |
 | state.py | 表示当前状态 | no | no | numpy, env |
-| reward.py | 奖励函数 | no | no | NA |
+| reward.py | 奖励函数 | no | no | env in __main__ |
 | replay.py | 经验回放缓冲区 | no | no | state |
 | network.py | Q网络 | no | yes | numpy, torch |
 | agent.py | 动作选择与推理 | no | no | state, replay, env, network, config |
