@@ -80,8 +80,8 @@ def test_moving_into_vacating_tail_survives() -> None:
 #      别写成"跑随机然后祈祷它能碰到"。
 # ============================================================
 
-def test_food_never_on_snake() -> None:
-    """回归测试：食物永远不能落在蛇身上。
+def test_food_and_bonus_never_on_snake() -> None:
+    """回归测试：食物and bonus 永远不能落在蛇身上。
 
     这是修掉的那个 bug 的守卫。建议：对 grid 4/5/6 各几个 seed，
     随机走若干步，断言 `result.food not in result.snake`（win 的终局除外）。
@@ -104,6 +104,11 @@ def test_food_never_on_snake() -> None:
                 f"food {result.food} 落在蛇上: "
                 f"grid = {grid}, seed = {seed}"
             )
+            if result.bonus[0] > 0:
+                assert result.bonus[1] not in result.snake, (
+                f"food {result.bonus[1]} 落在蛇上: "
+                f"grid = {grid}, seed = {seed}"
+            )              
 
 def test_length_grows_only_when_eating() -> None:
     """长度只在 ate 时 +1，其他事件长度不变。"""
