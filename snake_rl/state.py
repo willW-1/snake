@@ -1,6 +1,7 @@
 """把原始信息翻译成特征向量"""
 
 from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -20,7 +21,7 @@ RIGHT_OF = {0: 3, 1: 2, 2: 0, 3: 1}
 
 ACTIONS = {0: (-1, 0), 1: (1, 0), 2: (0, -1), 3: (0, 1)}
 
-def is_danger(snake: Sequence[tuple[int, int]], action: int, grid_size: int = 12) -> float:
+def is_danger(snake: Sequence[tuple[int, int]], action: int, grid_size) -> float:
     """朝 action 走一步会不会死。
 
     只用 snake[:-1]（排除尾巴）判定：尾巴会让位。

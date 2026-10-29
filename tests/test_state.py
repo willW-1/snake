@@ -86,9 +86,9 @@ def test_food_distance() -> None:
     env.food = (0, 0)
     obs = env.step(3)
     values = state.build(obs=obs, grid_size=env.grid_size)
-    assert abs(abs(values[7]) - (5 / (env.grid_size - 1))) < 1e-6, f"wrong food_row, fr={values[7]}"
-    assert abs(abs(values[8]) - 6 / (env.grid_size - 1)) < 1e-6, f"wrong food_column, fc={values[8]}"
-    assert abs(abs(values[9]) - 11 / ((env.grid_size - 1) * 2)) < 1e-6, f"wrong food_distance, fd={values[9]}"
+    assert abs(values[7] - (-5 / (env.grid_size - 1))) < 1e-6, f"wrong food_row, fr={values[7]}"
+    assert abs(values[8] - (-6 / (env.grid_size - 1))) < 1e-6, f"wrong food_column, fc={values[8]}"
+    assert abs(values[9] - 11 / ((env.grid_size - 1) * 2)) < 1e-6, f"wrong food_distance, fd={values[9]}"
 
 def test_state_bonus() -> None:
     env = SnakeEnv(grid_size=12, seed=1)
@@ -97,9 +97,9 @@ def test_state_bonus() -> None:
     env.bonus = [6, (0, 0)]
     obs = env.step(3)
     values = state.build(obs=obs, grid_size=env.grid_size)
-    assert abs(abs(values[10]) - 5 / (env.grid_size - 1)) < 1e-6, f"wrong bonus_row, r={values[10]}"
-    assert abs(abs(values[11]) - 6 / (env.grid_size - 1)) < 1e-6, f"wrong bonus_column, c={values[11]}"
-    assert abs(abs(values[12]) - 11 / ((env.grid_size - 1) * 2)) < 1e-6, f"wrong bonus_distance, d={values[12]}"
+    assert abs(values[10] - (-5 / (env.grid_size - 1))) < 1e-6, f"wrong bonus_row, r={values[10]}"
+    assert abs(values[11] - (-6 / (env.grid_size - 1))) < 1e-6, f"wrong bonus_column, c={values[11]}"
+    assert abs(values[12] - 11 / ((env.grid_size - 1) * 2)) < 1e-6, f"wrong bonus_distance, d={values[12]}"
     assert values[13] == 1.0, f"wrong bonus_exist, exist={values[13]}"
     assert abs(values[14] - 5 / 6) < 1e-6, f"wrong bonus points, point={values[13]}"
 
