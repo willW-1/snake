@@ -40,6 +40,7 @@ if __name__ == "__main__":
     rng = random.Random(14)
     env = SnakeEnv(grid_size = 12, seed = 23)
     total = 0.0
+    pos_total = 0.0
     new = env.reset()
     for _ in range(1000):
         action = rng.randint(0, 3)
@@ -47,8 +48,10 @@ if __name__ == "__main__":
         new = env.step(action)
         r = compute(prev, new)
         total += r
+        if r > 0:
+            pos_total += r
         if r != 0:
             print(f"{new.event:<10} r = {r:.2f}  scores = {env.scores}")
         if new.done:
             break
-    print("累计奖励", round(total, 2), "game scores", env.scores)
+    print("累计奖励", round(total, 2), "game scores", env.scores, "pos_total", pos_total)
