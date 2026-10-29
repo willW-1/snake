@@ -7,6 +7,7 @@ import numpy as np
 if TYPE_CHECKING:
     from snake_rl.env import StepResult
 
+#if bonus doesnt exist, distance values = -1
 FEATURES = [
     "danger_front", "danger_left", "danger_right",
     "heading_up", "heading_down", "heading_left", "heading_right",
@@ -19,7 +20,7 @@ RIGHT_OF = {0: 3, 1: 2, 2: 0, 3: 1}
 
 ACTIONS = {0: (-1, 0), 1: (1, 0), 2: (0, -1), 3: (0, 1)}
 
-def _is_danger(snake: list, action: int, grid_size: int = 12) -> float:
+def is_danger(snake: list, action: int, grid_size: int = 12) -> float:
     """朝 action 走一步会不会死。
 
     只用 snake[:-1]（排除尾巴）判定：尾巴会让位。
@@ -35,25 +36,25 @@ def _is_danger(snake: list, action: int, grid_size: int = 12) -> float:
     else:
         return 0.0
 
-def build(state: "StepResult", grid_size: int = 12) -> np.ndarray:
+def build(obs: "StepResult", grid_size: int = 12) -> np.ndarray:
     values: list[float] = []
-    direction_ = state.direction
-    values.append(_is_danger(snake=state.snake, action=direction_, grid_size=grid_size))
-    values.append(_is_danger(snake=state.snake, action=LEFT_OF[direction_], grid_size=grid_size))
-    values.append(_is_danger(snake=state.snake, action=RIGHT_OF[direction_], grid_size=grid_size))
+    direction_ = obs.direction
+    values.append(is_danger(snake=obs.snake, action=direction_, grid_size=grid_size))
+    values.append(is_danger(snake=obs.snake, action=LEFT_OF[direction_], grid_size=grid_size))
+    values.append(is_danger(snake=obs.snake, action=RIGHT_OF[direction_], grid_size=grid_size))
     heading = [0.0] * 4
-    heading[state.direction] = 1.0
+    heading[obs.direction] = 1.0
     values += heading
-    food_dr = abs(state.food[0] - state.snake[0][0]) / (grid_size - 1)
-    food_dc = abs(state.food[1] - state.snake[0][1]) / (grid_size - 1)
-    values += [food_dr, food_dc, food_dr + food_dc]
-    bonus_dr = abs(state.bonus[1][0] - state.snake[0][0]) / (grid_size - 1)
-    bonus_dc = abs(state.bonus[1][1] - state.snake[0][1]) / (grid_size - 1)
-    values += [bonus_dr, bonus_dc, bonus_dr + bonus_dc]
-    if state.bonus[0] > 0:
+    food_dr = abs(obs.food[0] - obs.snake[0][0]) / (grid_size - 1)
+    food_dc = abs(obs.food[1] - obs.snake[0][1]) / (grid_size - 1)
+    values += [food_dr, food_dc, (food_dr + food_dc) / 2]
+    if obs.bonus[0] > 0:
+        bonus_dr = abs(obs.bonus[1][0] - obs.snake[0][0]) / (grid_size - 1)
+        bonus_dc = abs(obs.bonus[1][1] - obs.snake[0][1]) / (grid_size - 1)
+        values += [bonus_dr, bonus_dc, (bonus_dr + bonus_dc) / 2]
         values.append(1.0)
     else:
-        values.append(0.0)
-    values.append(state.bonus[0] / 6)
+        values += [-1.0, -1.0, -1.0, 0.0]
+    values.append(obs.bonus[0] / 6)
     return np.array(values, dtype=np.float32)
 
