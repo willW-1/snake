@@ -117,11 +117,6 @@ class SnakeEnv:
             self._done = True
         return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, self._done, event)
     
-    '''
-    def return_status(self) -> StepResult:
-        """ONLY FOR TEST !!!"""
-        return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, self._done, "test")
-    '''
 
 
 if __name__ == "__main__":

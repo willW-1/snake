@@ -259,12 +259,11 @@ def test_eat_bonus_point() -> None:
     env.bonus = [6, (3, 3)]
     env.scores = 2
     env.direction = 2
-    result = env.return_status()
-    for i in range(3):
-        assert result.bonus[0] == 6 - i, (
-            f"calculte wrong, snake at {result.snake}, bonus point = {result.bonus[0]}"
-        )
-        result = env.step(2)
+    assert env.bonus == [6, (3, 3)]       
+    result = env.step(2); assert result.bonus[0] == 5
+    result = env.step(2); assert result.bonus[0] == 4
+    result = env.step(2)                    
+    assert env.scores == 6 and result.bonus[0] == 0
     assert env.scores == 6, (
         f"scores wrong, scores = {env.scores}, snake = {result.snake}")
     assert result.bonus[0] == 0, (f"bonus生成有问题， bonus point originally = {result.bonus[0]}")
