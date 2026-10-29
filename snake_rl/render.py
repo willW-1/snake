@@ -92,26 +92,3 @@ if __name__ == "__main__":
             pygame.time.Clock().tick(3)
     pygame.quit()
 
-'''
-
-import pygame
-
-pygame.init()
-screen = pygame.display.set_mode((1024, 768))
-clock = pygame.time.Clock()
-
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    screen.fill((30, 30, 30))
-    index = 0
-    for _ in range(10):     
-        pygame.draw.rect(screen, (220, 80, 80), (100, 40 + index, 40, 40))
-        pygame.display.flip()
-        index += 40
-        clock.tick(5)
-
-pygame.quit()
-'''
