@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 import random
 
-# 坐标一律 (row, col)，与 board[r][c] 一致；pygame 的 (x, y) 只在 render.py 里转换。
+from snake_rl import geometry
+
 #0=上(-1,0)  1=下(+1,0)  2=左(0,-1)  3=右(0,+1)
-ACTIONS: dict[int, tuple[int, int]] = {0: (-1, 0), 1: (1, 0), 2: (0, -1), 3: (0, 1)}
 
 #吃 bonus 后，新 obs 里的 bonus 已经是 (0, ()) 或者新生成的 6。 所以奖励函数要取"吃到的 bonus 值"，必须从前一帧 prev.bonus[0] 读，不能从 new.bonus 读。
 
@@ -18,14 +18,17 @@ class StepResult:
     direction: int
     done: bool
     event: str
+    board: Board
     #event:  "reset" / "moved" / "ate" / "hit_wall" / "hit_self" / "timeout" / "win" / "ate_bonus"
 
 
 class SnakeEnv:
-    def __init__(self, grid_size: int = 12, seed: int | None = None) -> None:
+    def __init__(self, grid_size: int = 12, seed: int | None = None, wrap: bool = False) -> None:
         self.grid_size = grid_size
         self._rng = random.Random(seed)
+        self.board = geometry.Board(grid_size=grid_size, wrap=wrap)
         self.reset()
+        
 
     def reset(self) -> StepResult:
         """开一局新的，返回初始局面。
@@ -42,7 +45,9 @@ class SnakeEnv:
         self.scores = 0
         self.bonus = [0, ()]
         self.haveeaten = False
-        return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, False, "reset")
+        return StepResult(snake=tuple(self.snake), food=tuple(self.food), bonus=tuple(self.bonus), 
+                        direction=self.direction, done=False, event="reset", 
+                        board=self.board)
 
     def step(self, action: int) -> StepResult:
         """让蛇按 action 走一步，返回新世界。
@@ -51,24 +56,19 @@ class SnakeEnv:
         #决定3：反向=忽略
         if self._done:
             raise ValueError("蛇已经死了，先 reset()")
-        if action + self.direction == 5 or action + self.direction == 1 : action = self.direction
+        if action + self.direction == 5 or action + self.direction == 1: 
+            action = self.direction
         self.direction = action
-        new_head = (self.snake[0][0] + ACTIONS[action][0], self.snake[0][1] + ACTIONS[action][1])
-
+        new_head = self.board.next_pos(pos=self.snake[0], action=self.direction)
         #撞死的时候朝向就是准备朝向的地方
+        #撞墙判定&撞自己判定
+        event = geometry.death_reason(snake=self.snake, action=self.direction, board=self.board)
+
         tail = self.snake[-1]
         del self.snake[-1]
-
-        #撞墙判定
-        if new_head[0] in (-1, self.grid_size) or new_head[1] in (-1, self.grid_size): 
-            event = "hit_wall"
-            self.snake.append(tail)
-
-        #撞自己判定
-        elif new_head in self.snake: 
-            event = "hit_self"
-            self.snake.append(tail)
         
+        if event:
+            self.snake.append(tail)
         #吃bonus，会变长一格，也会重置timeout判例，这是设计
         elif new_head == self.bonus[1]:
             event = "ate_bonus"
@@ -115,8 +115,8 @@ class SnakeEnv:
 
         if event in ("hit_wall", "hit_self", "timeout", "win"): 
             self._done = True
-        return StepResult(tuple(self.snake), self.food, tuple(self.bonus), self.direction, self._done, event)
-    
+        return StepResult(snake=tuple(self.snake), food=tuple(self.food), bonus=tuple(self.bonus), 
+        direction=self.direction, done=self._done, event=event, board=self.board)   
 
 
 if __name__ == "__main__":
