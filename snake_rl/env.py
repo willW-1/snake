@@ -18,7 +18,7 @@ class StepResult:
     direction: int
     done: bool
     event: str
-    board: Board
+    board: geometry.Board
     #event:  "reset" / "moved" / "ate" / "hit_wall" / "hit_self" / "timeout" / "win" / "ate_bonus"
 
 
