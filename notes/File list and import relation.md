@@ -69,6 +69,7 @@
 
 | #   | 文件           | 职责                                      | 需要 pygame? | 需要 torch? | 它 import 谁                                                                |
 | --- | ------------ | --------------------------------------- | ---------- | --------- | ------------------------------------------------------------------------- |
+| 0   | `geometry.py` | 棋盘几何与死亡判定：移动、归一化差值、距离、`death_reason`（见第 7 节） | 否          | 否         | 无                                                                         |
 | 1   | `config.py`  | 超参数集中定义（只有数据，没有逻辑）                      | 否          | 否         | 无                                                                         |
 | 2   | `env.py`     | 游戏规则：`reset` / `step`，返回**原始信息**        | 否          | 否         | `numpy`（可选）                                                               |
 | 3   | `reward.py`  | 按"这一步发生了什么"算出奖励                         | 否          | 否         | 无（纯函数）                                                                    |
@@ -105,11 +106,12 @@
 ```
 第 0 层  地基
     config.py            谁都能用；它不 import 任何项目内模块
+    geometry.py          棋盘几何 + 死亡判定；不 import 任何项目内模块（见第 7 节）
 
 第 1 层  互不依赖的原语
-    env.py               → numpy
+    env.py               → geometry
     reward.py            → （无）
-    state.py             → numpy
+    state.py             → geometry, numpy
     replay.py            → numpy
     network.py           → torch
 
@@ -127,3 +129,79 @@
 1. 底层不许 import 上层（`env.py` 里出现 `import train` 就是错的）
 2. `env.py` 里不许出现 `pygame` 和 `torch`
 3. 不许有循环依赖
+
+---
+
+## 7. 地形扩展（方案 B）：geometry.py
+
+> 起因：想把"撞墙死"改成"从一端出去、另一端回来"（环面 / wrap）。
+> 结论：**不在 `env.py` 里硬改**，而是把"几何 + 死亡判定"下沉成一个共享模块，
+> `wrap` 作为 `Board` 的一个开关。平面模式保持默认，环绕模式用来做 A/B 对照实验。
+
+### 7.1 为什么不能直接改 env.py
+
+"墙"这个概念散落在 **4 个地方**：`env.step` 的越界判定、`state.is_danger` 的越界判定、
+`reward.compute` 的 `hit_wall` 分支、以及 4~5 个测试用例。
+
+只改 `env.py` 会制造出这类 bug：
+
+> **环境允许你绕过去，但状态认为那里是墙。**
+
+它不报错、不崩溃，只表现为"训练上不去"。而且现在已经有重复了 ——
+`ACTIONS` 在 `env.py` 和 `state.py` 各抄了一份；再往两边各加一份取模逻辑，迟早不一致。
+
+### 7.2 提炼成一条通则
+
+> **同一条规则，只能有一个定义处。**
+> 当两个平级模块需要同一条规则时，把它下沉到它们都依赖的下一层，而不是各抄一份。
+
+（这和"依赖越少越好"是同一套思路的两个方向：一个管**广度**，一个管**唯一性**。）
+
+### 7.3 接口（定稿）
+
+```python
+# snake_rl/geometry.py —— 不 import 任何项目内模块
+
+ACTIONS: dict[int, tuple[int, int]]        # 0上 1下 2左 3右
+LEFT_OF / RIGHT_OF: dict[int, int]          # 相对转向表（原来在 state.py 里）
+
+@dataclass(frozen=True)
+class Board:
+    size: int = 12
+    wrap: bool = False
+
+    def next_pos(self, pos, action) -> tuple[int, int]
+        # plane: 不取模（可能越界，交给 death_reason 判）
+        # wrap : (r + dr) % size , (c + dc) % size
+
+    def signed_delta(self, a: int, b: int) -> float
+        # 从 a 到 b 的有符号差，已归一化到 [-1, 1]
+        # plane 除数 = size - 1 ; wrap 除数 = size // 2
+
+    def dist(self, p, q) -> float
+        # 曼哈顿距离；wrap 时取环面最短路径；已归一化
+
+def death_reason(snake, action, board) -> str | None
+    # 返回 None / "hit_wall" / "hit_self"
+    # env 用它决定事件名；state 用它算危险位 —— 两边调同一个函数
+```
+
+### 7.4 三个容易踩的点
+
+1. **归一化除数随模式变**：平面最大差 `size-1`，环绕最大差 `size//2`。
+   让 `signed_delta` 自己负责归一化，`state.py` 就不需要出现 `if wrap`。
+2. **判定顺序**：环绕时必须**先取模、再判撞身体**，否则"绕回去正好落在自己身上"会漏判。
+3. **退化尺寸**：`wrap` 且 `size <= 2` 时移动会绕回自身附近，`size == 1` 会原地撞自己 ——
+   写进 docstring，不特殊处理。
+
+### 7.5 对现有接口的影响
+
+- `StepResult` 增加 `board: Board` 字段 → `state.build(obs)` **不再需要 `grid_size` 参数**。
+  顺手消灭了"忘了传 grid_size 就默认 12"那个静默 bug（观测自带世界规则）。
+- `SnakeEnv(size=12, wrap=False, seed=None)`；`wrap` 默认 False → **现有 25 个测试零改动**。
+- `reward.py` 的 `hit_wall` 分支**保留** —— 平面模式还需要它。
+
+### 7.6 待办
+
+- **C0（第 2 段开头先做）**：完成本重构 + 新增 wrap 测试，确认 25 个老用例全绿。
+- 训练出能玩的 AI（M5）之后，再做「平面 vs 环绕」A/B 对照实验（见计划表 C10）。
