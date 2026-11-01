@@ -122,16 +122,16 @@ if __name__ == "__main__":
     # 调试用：打一局随机策略的文字棋盘，达到 M1
     rng = random.Random(1)
     snake1 = SnakeEnv(seed = 1)
-    table = [['*'] * snake1.grid_size for _ in range(snake1.grid_size)]
+    table = [['*'] * snake1.board.grid_size for _ in range(snake1.board.grid_size)]
     state = snake1.step(rng.randint(0, 3))
     while(not state.done):
-        for i in range(snake1.grid_size):
-            for j in range(snake1.grid_size):
+        for i in range(snake1.board.grid_size):
+            for j in range(snake1.board.grid_size):
                 if (i, j) in state.snake: table[i][j] = "o"
                 elif (i, j) == state.food: table[i][j] = "@"
                 elif state.bonus[1] == (i, j): table[i][j] = str(state.bonus[0])
                 else: table[i][j] = "*"
-        for i in range(snake1.grid_size):
+        for i in range(snake1.board.grid_size):
             print(" ".join(table[i]))
         state = snake1.step(rng.randint(0, 3))
         print(len(snake1.snake), snake1.scores)
