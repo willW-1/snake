@@ -24,7 +24,6 @@ class StepResult:
 
 class SnakeEnv:
     def __init__(self, grid_size: int = 12, seed: int | None = None, wrap: bool = False) -> None:
-        self.grid_size = grid_size
         self._rng = random.Random(seed)
         self.board = geometry.Board(grid_size=grid_size, wrap=wrap)
         self.reset()
@@ -34,12 +33,12 @@ class SnakeEnv:
         """开一局新的，返回初始局面。
         """
         self._done = False
-        self.snake = [(self.grid_size // 2, self.grid_size // 2 + 1),
-                      (self.grid_size // 2, self.grid_size // 2),
-                      (self.grid_size // 2, self.grid_size // 2 - 1)]
+        self.snake = [(self.board.grid_size // 2, self.board.grid_size // 2 + 1),
+                      (self.board.grid_size // 2, self.board.grid_size // 2),
+                      (self.board.grid_size // 2, self.board.grid_size // 2 - 1)]
         self.direction = 3
         #随机放食物
-        empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake]      
+        empty = [(r, c) for r in range(self.board.grid_size) for c in range(self.board.grid_size) if (r, c) not in self.snake]      
         self.food = self._rng.choice(empty)
         self.steps = 0
         self.scores = 0
@@ -87,7 +86,7 @@ class SnakeEnv:
             self.snake.append(tail)
             self.snake = [new_head, ] + self.snake
             self.haveeaten = True
-            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if ((r, c) not in self.snake and (r, c) != self.bonus[1])]
+            empty = [(r, c) for r in range(self.board.grid_size) for c in range(self.board.grid_size) if ((r, c) not in self.snake and (r, c) != self.bonus[1])]
             #设计，win excludes bonus grid
             if not empty: event = "win"#赢了之后food 无意义
             else: self.food = self._rng.choice(empty)
@@ -107,7 +106,7 @@ class SnakeEnv:
 
         #bonus的判定与生成
         if(self.bonus[0] == 0 and self.scores % 6 == 0 and self.haveeaten):
-            empty = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size) if (r, c) not in self.snake + [new_head ,self.food]]
+            empty = [(r, c) for r in range(self.board.grid_size) for c in range(self.board.grid_size) if (r, c) not in self.snake + [new_head ,self.food]]
             if empty:
                 self.bonus[0] = 6
                 self.bonus[1] = self._rng.choice(empty)

@@ -45,7 +45,7 @@ class Board:
         
 
 
-def death_reason(snake: Sequence, action: int, board: Board) -> str | None:
+def death_reason(snake: Sequence[Pos], action: int, board: Board) -> str | None:
     """朝 action 走一步会死吗？
     死因返回 "hit_wall" / "hit_self"，活着返回 None。, size=1必死
     """
