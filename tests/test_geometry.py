@@ -28,6 +28,7 @@ def test_correct_death_reason() -> None:
     env.snake = [(2, 2), (2, 1), (2, 0), (1, 0), (0, 0)]
     obs = env.step(3)
     assert obs.event == "hit_self", f"wrong event, event = {obs.event}"
+    geometry.death_reason(snake=[(0, 0)], action=0, board=geometry.Board(12, False)) == "hit_wall"
 
 def test_correct_signed_delta() -> None:
     board = geometry.Board(grid_size=12, wrap=True)
@@ -43,6 +44,9 @@ def test_dist_and_signed_delta_right_value() -> None:
                     f"wrong dist, {r1}, {r2}, {c1}, {c2}, {board.dist((r1, c1), (r2, c2))}")
                     assert -1 <= board.signed_delta(r1, r2) <= 1, (
                     f"wrong delta, {r1}, {r2}, {board.signed_delta(r1, r2)}")
+    assert 0.5 == pytest.approx(board.dist((0, 0), (6, 0)))
+    board = geometry.Board(grid_size=12, wrap=False)
+    assert 1.0 == pytest.approx(board.dist((0, 0), (11, 11)))
 
 def test_hit_self() -> None:
     board = geometry.Board(grid_size=1, wrap=True)

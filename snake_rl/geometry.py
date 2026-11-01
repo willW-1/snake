@@ -18,6 +18,7 @@ class Board:
 
     def next_pos(self, pos: Pos, action: int) -> Pos:
         """走一步之后的新坐标（单轴，不对整条蛇负责）。
+        越界坐标原样返回，不 clamp、不取模
         """
         if self.wrap:
             x = (pos[0] + ACTIONS[action][0]) % self.grid_size
@@ -29,6 +30,8 @@ class Board:
 
     def signed_delta(self, a: int, b: int) -> float:
         """从 a 到 b 的有符号差，归一化到 [-1, 1]。
+        平面 /(size-1)；环绕先取最短路径再 /(size//2)
+        size <= 2 时 signed_delta无意义
         """
         if self.wrap:
             d = (b - a + (self.grid_size // 2)) % self.grid_size - self.grid_size // 2
@@ -38,6 +41,7 @@ class Board:
 
     def dist(self, p: Pos, q: Pos) -> float:
         """p 到 q 的距离，归一化到 [0, 1]。
+        size <= 2 时 dist 无意义
         """
         abs_x = abs(self.signed_delta(p[0], q[0]))
         abs_y = abs(self.signed_delta(p[1], q[1]))
@@ -47,7 +51,8 @@ class Board:
 
 def death_reason(snake: Sequence[Pos], action: int, board: Board) -> str | None:
     """朝 action 走一步会死吗？
-    死因返回 "hit_wall" / "hit_self"，活着返回 None。, size=1必死
+    死因返回 "hit_wall" / "hit_self"，活着返回 None, size=1必死
+    判定对象是 snake[:-1]：尾巴这一步会腾开
     """
     next_head = board.next_pos(pos=snake[0], action=action)
     if board.wrap:
