@@ -29,7 +29,8 @@ class Board:
         return (x, y)
 
     def signed_delta(self, a: int, b: int) -> float:
-        """从 a 到 b 的有符号差，归一化到 [-1, 1]。
+        """从 a 到 b 的有符号差，归一化,并非[-1, 1]:
+        (b - a + n//2) % n - n//2 的值域天然是 [-n//2, n//2 - 1]，偶数环的端点只能归到一侧。
         平面 /(size-1)；环绕先取最短路径再 /(size//2)
         size <= 2 时 signed_delta无意义
         """
