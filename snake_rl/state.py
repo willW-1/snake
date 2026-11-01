@@ -37,11 +37,11 @@ def build(obs: "StepResult") -> np.ndarray:
     values += heading
     food_dr = obs.board.signed_delta(obs.snake[0][0], obs.food[0])
     food_dc = obs.board.signed_delta(obs.snake[0][1], obs.food[1])
-    values += [food_dr, food_dc, (abs(food_dr) + abs(food_dc)) / 2]
+    values += [food_dr, food_dc, obs.board.dist(obs.snake[0], obs.food)]
     if obs.bonus[0] > 0:
         bonus_dr = obs.board.signed_delta(obs.snake[0][0], obs.bonus[1][0])
         bonus_dc = obs.board.signed_delta(obs.snake[0][1], obs.bonus[1][1])
-        values += [bonus_dr, bonus_dc, (abs(bonus_dr) + abs(bonus_dc)) / 2]
+        values += [bonus_dr, bonus_dc, obs.board.dist(obs.snake[0], obs.bonus[1])]
         values.append(1.0)
     else:
         values += [-1.0, -1.0, -1.0, 0.0]
