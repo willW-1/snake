@@ -21,7 +21,7 @@ def make_screen(grid_size: int, cell: int = CELL) -> pygame.Surface:
     上方留3CELL的空位写分数，其他三边留1CELL
     """
     pygame.init()
-    screen =  pygame.display.set_mode((CELL * (grid_size + 2), CELL * (grid_size + 4)))
+    screen = pygame.display.set_mode((cell * (grid_size + 2), cell * (grid_size + 4)))
     pygame.display.set_caption("Snake")
     return screen
 
@@ -29,40 +29,40 @@ def make_screen(grid_size: int, cell: int = CELL) -> pygame.Surface:
 def draw(screen, font, scores: int, obs: "StepResult", grid_size: int, cell: int = CELL) -> None:
     """把一帧画到 screen 上。"""
     #background
-    pygame.draw.rect(screen, BG_COLOR, (0, 0, CELL * (grid_size + 2), CELL * (grid_size + 4)))
+    pygame.draw.rect(screen, BG_COLOR, (0, 0, cell * (grid_size + 2), cell * (grid_size + 4)))
 
     #points
-    header_w = (grid_size + 2) * CELL
-    header_h = 3 * CELL
+    header_w = (grid_size + 2) * cell
+    header_h = 3 * cell
     score_surf = font.render(f"Score: {scores}", True, (255, 255, 255))
     w, h = score_surf.get_size()
     screen.blit(score_surf, ((header_w - w) // 2, (header_h - h) // 2))
 
     #snake body
     for snake in obs.snake:
-        pygame.draw.rect(screen, BODY_COLOR, (CELL * (snake[1] + 1), CELL * (snake[0] + 3), CELL, CELL))
+        pygame.draw.rect(screen, BODY_COLOR, (cell * (snake[1] + 1), cell * (snake[0] + 3), cell, cell))
     
     #snake head
-    pygame.draw.rect(screen, HEAD_COLOR, (CELL * (obs.snake[0][1] + 1), CELL * (obs.snake[0][0] + 3), CELL, CELL))
+    pygame.draw.rect(screen, HEAD_COLOR, (cell * (obs.snake[0][1] + 1), cell * (obs.snake[0][0] + 3), cell, cell))
 
     #food
-    pygame.draw.rect(screen, FOOD_COLOR, (CELL * (obs.food[1] + 1), CELL * (obs.food[0] + 3), CELL, CELL))
+    pygame.draw.rect(screen, FOOD_COLOR, (cell * (obs.food[1] + 1), cell * (obs.food[0] + 3), cell, cell))
 
     #bonus
     bonus = obs.bonus
     if bonus[0] > 0:
-        x = CELL * (bonus[1][1] + 1)
-        y = CELL * (bonus[1][0] + 3)
+        x = cell * (bonus[1][1] + 1)
+        y = cell * (bonus[1][0] + 3)
         pygame.draw.rect(
-            screen, (200 - 15 * bonus[0], 10, 200 - 15 * bonus[0]), (x, y, CELL, CELL))
+            screen, (200 - 15 * bonus[0], 10, 200 - 15 * bonus[0]), (x, y, cell, cell))
         surf = font.render(str(bonus[0]), True, (0, 0, 0)) 
         w, h = surf.get_size()                                    
-        screen.blit(surf, (x + (CELL - w) // 2, y + (CELL - h) // 2))                 
+        screen.blit(surf, (x + (cell - w) // 2, y + (cell - h) // 2))                 
 
     #seperate line
-    for x in range(CELL, CELL * (grid_size + 1), CELL):
-        for y in range(CELL * 3, CELL * (grid_size + 3), CELL):
-            pygame.draw.rect(screen, LINE_COLOR, (x, y, CELL, CELL), 1)    
+    for x in range(cell, cell * (grid_size + 1), cell):
+        for y in range(cell * 3, cell * (grid_size + 3), cell):
+            pygame.draw.rect(screen, LINE_COLOR, (x, y, cell, cell), 1)    
     pygame.display.flip()
 
 
@@ -77,18 +77,16 @@ if __name__ == "__main__":
     obs = env.reset()
     env.bonus = [6, (0, 0)]
     rng = random.Random(1)
+    clock = pygame.time.Clock()
     while running:
-        for _ in range(1000):
-            if obs.done:
-                obs = env.reset()
-            draw(screen=screen, font=font, scores=env.scores, obs=obs, grid_size=12, cell=CELL)
-            obs = env.step(rng.randint(0, 3))
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    break
-            if not running:
-                break
-            pygame.time.Clock().tick(3)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        if obs.done:
+            obs = env.reset()
+            env.bonus = [6, (0, 0)]
+        draw(screen=screen, font=font, scores=env.scores, obs=obs, grid_size=12, cell=CELL)
+        obs = env.step(rng.randint(0, 3))
+        clock.tick(3)
     pygame.quit()
 
